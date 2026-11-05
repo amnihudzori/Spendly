@@ -6,7 +6,7 @@ import { createServer } from 'vite'
 import { createEmptyState, dateKey, STORAGE_KEY, monthKey } from '../src/lib/finance.js'
 
 test('wallet funding, income editing, analytics, and saved-data compatibility', async (t) => {
-  const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost/', pretendToBeVisual: true })
+  const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost/Spendly/', pretendToBeVisual: true })
   const originalGlobals = new Map()
   for (const key of ['window', 'document', 'navigator', 'HTMLElement', 'HTMLInputElement', 'HTMLDialogElement', 'SVGElement', 'Node', 'Event', 'CustomEvent', 'KeyboardEvent', 'MouseEvent', 'MutationObserver', 'FormData', 'localStorage', 'getComputedStyle']) {
     originalGlobals.set(key, Object.getOwnPropertyDescriptor(globalThis, key))
@@ -31,7 +31,7 @@ test('wallet funding, income editing, analytics, and saved-data compatibility', 
     await screen.findByRole('heading', { name: 'Analytics', exact: true }, { timeout: 15000 })
   }
   const change = async (field, value) => { await user.clear(field); if (value) await user.type(field, value) }
-  const remount = (path = '/home') => { cleanup(); window.history.replaceState({}, '', path); render(createElement(App)) }
+  const remount = (path = '/home') => { cleanup(); window.history.replaceState({}, '', '/Spendly' + path); render(createElement(App)) }
   const originalConsoleWarn = console.warn
   console.warn = (...args) => { if (!String(args[0]).includes('width') && !String(args[0]).includes('height')) originalConsoleWarn(...args) }
   try {
@@ -70,7 +70,7 @@ test('wallet funding, income editing, analytics, and saved-data compatibility', 
     })
     await t.test('Add Money opens Income with all requested source choices', async () => {
       await openLink('Add Money')
-      assert.equal(window.location.pathname, '/add')
+      assert.equal(window.location.pathname, '/Spendly/add')
       assert.equal(window.location.search, '?type=income')
       assert.ok(screen.getByRole('heading', { name: 'Add Income' }))
       assert.equal(screen.getByRole('button', { name: 'Income', exact: true }).getAttribute('aria-pressed'), 'true')
@@ -177,7 +177,7 @@ test('wallet funding, income editing, analytics, and saved-data compatibility', 
       assert.equal(balance(), 'RM 614.50')
       assert.equal(saved().transactions.length, 2)
       remount('/')
-      assert.equal(window.location.pathname, '/home')
+      assert.equal(window.location.pathname, '/Spendly/home')
       assert.equal(balance(), 'RM 614.50')
       assert.equal(saved().initialBalance, 600)
       assert.equal(saved().transactions.length, 2)
@@ -245,6 +245,17 @@ test('wallet funding, income editing, analytics, and saved-data compatibility', 
       assert.equal(screen.getByRole('button', { name: 'Freelance', exact: true }).getAttribute('aria-pressed'), 'true')
       await user.click(screen.getByRole('button', { name: 'Save Changes' }))
       assert.deepEqual(saved().transactions, legacy.transactions)
+    })
+    await t.test('deep links and navigation use the project basename without changing saved data', async () => {
+      const existing = saved()
+      remount('/add?type=income')
+      assert.ok(screen.getByRole('heading', { name: 'Add Income' }))
+      assert.equal(screen.getAllByRole('link', { name: 'Home', exact: true })[0].getAttribute('href'), '/Spendly/home')
+      remount('/edit/legacy-income')
+      assert.ok(screen.getByRole('heading', { name: 'Edit Income' }))
+      remount('/history')
+      assert.ok(screen.getByRole('button', { name: /View Previous work/ }))
+      assert.deepEqual(saved(), existing)
     })
     await t.test('malformed saved data is reported and never silently overwritten', async () => {
       cleanup()

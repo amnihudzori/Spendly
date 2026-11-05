@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#6C4DFF" />
+    <title>Opening Spendly…</title>
+    <script>
+      // Pages cannot rewrite SPA routes. Reload the app entry, carrying the
+      // complete route in one encoded query value, including its query/hash.
+      (function () {
+        var base = '/Spendly/';
+        var current = new URL(window.location.href);
+        if (!current.pathname.startsWith(base)) return;
+        var route = current.pathname.slice(base.length) + current.search + current.hash;
+        window.location.replace(base + '?__spendly_route=' + encodeURIComponent(route));
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Opening Spendly… <a href="/Spendly/">Return to Spendly</a>.</p>
+    <noscript>Enable JavaScript to use Spendly.</noscript>
+  </body>
+</html>

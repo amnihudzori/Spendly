@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. For a production build and local preview:
+Open the local URL printed by Vite, including `/Spendly/` (normally `http://localhost:5173/Spendly/`). For a production build and local preview:
 
 ```sh
 npm run build
@@ -19,6 +19,18 @@ npm run preview
 ```
 
 Run the financial calculation and component integration tests with `npm test`.
+
+## GitHub Pages deployment
+
+The target is `https://amnihudzori.github.io/Spendly/`. Vite uses `base: '/Spendly/'`, and React Router reads the same base from `import.meta.env.BASE_URL`. The routes listed below are relative to that base, so Home is `/Spendly/home` on Pages.
+
+1. In the Spendly repository, open **Settings → Pages → Build and deployment → Source** and select **GitHub Actions**. Publishing the `main` branch's root serves the development `index.html` and cannot run the React source.
+2. Commit and push these changes to `main`. The **Deploy Spendly to GitHub Pages** workflow can also be started manually from **Actions**.
+3. The workflow runs `npm ci`, `npm test`, `npm run build`, and `node scripts/verify-pages-build.mjs`. It uploads **only `./dist`** as the Pages artifact, then deploys that artifact. Keep `dist/` ignored in Git; Actions rebuilds it from the lockfile.
+
+`public/404.html` handles direct visits and refreshes to client routes. GitHub serves that fallback for a missing path; it redirects to `/Spendly/` with the original path, query, and hash encoded in `__spendly_route`. Before React mounts, `src/main.jsx` restores the original URL using `history.replaceState`. This keeps clean URLs such as `/Spendly/history` and `/Spendly/add?type=income`, without changing wallet data or introducing hash-based navigation.
+
+After building locally, run `node scripts/verify-pages-build.mjs` to check JavaScript, CSS, favicon, font URLs, and the generated `dist/404.html`. Preview the production build at `http://localhost:4173/Spendly/`.
 
 ## Screens and behavior
 
